@@ -7,9 +7,19 @@ import { saveUpload, deleteUpload } from "@/lib/uploads";
 import { settingsFormSchema } from "@/lib/validations/settings";
 
 export async function getSettings() {
-  const settings = await prisma.settings.findUnique({ where: { id: "settings" } });
-  if (settings) return settings;
-  return prisma.settings.create({ data: { id: "settings" } });
+  try {
+    return await prisma.settings.upsert({
+      where: { id: "settings" },
+      update: {},
+      create: { id: "settings" },
+    });
+  } catch (error) {
+    // In some edge cases during highly concurrent static generation, even upsert can throw depending on the SQLite driver version.
+    // Fallback to reading.
+    const settings = await prisma.settings.findUnique({ where: { id: "settings" } });
+    if (settings) return settings;
+    throw error;
+  }
 }
 
 export async function updateSettings(_prevState: unknown, formData: FormData) {
