@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  image       String?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Product {
+  id               String     @id @default(cuid())
+  name             String
+  slug             String     @unique
+  sku              String     @unique
+  description      String?
+  shortDescription String?
+  categoryId       String?
+  category         Category?  @relation(fields: [categoryId], references: [id])
+  subCategory      String?
+  // SQLite has no native array column, so images/tags are stored as JSON strings.
+  images           String     @default("[]")
+  tags             String     @default("[]")
+  featured         Boolean    @default(false)
+  price            Float?
+  stock            Int        @default(0)
+  brand            String?
+  material         String?
+  dimensions       String?
+  weight           Float?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([categoryId])
+  @@index([featured])
+  @@index([name])
+}
+
+model Enquiry {
+  id          String   @id @default(cuid())
+  name        String
+  companyName String?
+  email       String?
+  phone       String?
+  message     String?
+  // SQLite has no native array column: JSON array of Product ids the enquiry relates to.
+  productIds  String   @default("[]")
+  createdAt   DateTime @default(now())
+}
+
+model Settings {
+  id           String  @id @default("settings")
+  companyName  String  @default("JK Online Hub")
+  logo         String?
+  description  String?
+  email        String?
+  phone        String?
+  address      String?
+  // JSON string: { facebook, instagram, twitter, linkedin, whatsapp }
+  socialLinks  String  @default("{}")
+  seoTitle     String?
+  seoDescription String?
+  updatedAt    DateTime @updatedAt
+}
